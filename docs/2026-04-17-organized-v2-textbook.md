@@ -13,8 +13,6 @@
 
 **Tech Stack:** Markdown 文件，Agent subagent 并行调度，PROGRESS.md 状态追踪，memory 系统跨会话断点恢复
 
-**Spec:** `docs/superpowers/specs/2026-04-17-organized-v2-textbook-design.md`
-
 ---
 
 ## 断点恢复协议
@@ -23,6 +21,7 @@
 
 ### 恢复步骤（每个新会话启动时执行）
 
+0. **冷启动检测**：若 `memory/organized-v2-progress.md` 不存在，说明是首次会话，从 Task 1 开始执行，无需继续后续步骤
 1. **读取 memory**：读取 `memory/organized-v2-progress.md`，了解当前全局进度
 2. **读取 PROGRESS.md**：读取 `v2-systematic/PROGRESS.md`，获取细粒度章节级状态
 3. **僵尸清理**：将 PROGRESS.md 中所有"进行中"状态改为"失败"，失败次数+1
@@ -85,6 +84,7 @@
 **Files:**
 - Create: `v2-systematic/` 目录结构
 - Create: `organized-v2/` 目录结构
+- Create: `memory/organized-v2-progress.md`
 
 - [ ] **Step 1: 创建 v2-systematic 目录**
 
@@ -98,7 +98,51 @@ mkdir -p v2-systematic/drafts v2-systematic/prompts
 mkdir -p organized-v2/P1-认知基础 organized-v2/P2-形态学 organized-v2/P3-中枢理论 organized-v2/P4-走势与级别 organized-v2/P5-背驰理论 organized-v2/P6-买卖点体系 organized-v2/P7-操作系统 organized-v2/P8-高阶应用 organized-v2/附录
 ```
 
-- [ ] **Step 3: 验证目录结构**
+- [ ] **Step 3: 初始化 memory 文件**
+
+创建 `memory/organized-v2-progress.md`，写入以下初始内容：
+
+```markdown
+# organized-v2 跨会话进度追踪
+
+> 此文件由各阶段主会话维护，供断点恢复时读取。
+> 更新规则：**当前状态/下一步操作/各Phase状态 覆盖写入**；会话日志**追加**，不覆盖。
+
+## 当前状态
+
+- **项目状态**：进行中
+- **当前 Phase**：Task 1 目录初始化
+- **下一步操作**：执行 Task 2（编写 00-TEMPLATE.md）
+- **最后更新**：{当前时间}
+
+## 各 Phase 状态
+
+| Phase | 状态 | 完成内容 | 备注 |
+|-------|------|---------|------|
+| Task 1-7（准备） | 进行中 | 目录骨架已创建 | |
+| Phase 0 | 待处理 | - | |
+| Phase 1 波1 (P1+P2) | 待处理 | - | |
+| Phase 1 波2 (P3) | 待处理 | - | |
+| Phase 1 波3 (P4+P5) | 待处理 | - | |
+| Phase 1 波4 (P6) | 待处理 | - | |
+| Phase 1 波5 (P7+P8) | 待处理 | - | |
+| Phase 2 | 待处理 | - | |
+| Phase 3 波1-5 | 待处理 | - | |
+| Phase 4 | 待处理 | - | |
+
+## 章节完成清单（30个，Phase 0 完成后由主会话填写章节ID）
+
+| 章节ID | 章节标题 | Phase 1 | Phase 2 | Phase 3 |
+|--------|---------|---------|---------|---------|
+| （Phase 0 完成后填写） | | | | |
+
+## 会话日志（追加，不覆盖）
+
+### 会话 1 — {当前日期}
+- 执行了 Task 1：创建目录骨架、初始化 memory 文件
+```
+
+- [ ] **Step 4: 验证目录结构**
 
 ```bash
 ls -R v2-systematic/ organized-v2/
@@ -106,11 +150,11 @@ ls -R v2-systematic/ organized-v2/
 
 Expected: 两个目录树均存在，子目录完整
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add v2-systematic/ organized-v2/
-git commit -m "chore: create organized-v2 project skeleton directories"
+git add v2-systematic/ organized-v2/ memory/
+git commit -m "chore: create organized-v2 project skeleton directories and initialize memory"
 ```
 
 ---
@@ -261,6 +305,8 @@ Prompt 结构参考 `systematic/prompts/phase1-batch.md`，包含：
 - {{V1_SOURCE_FILES}}：organized-v1 中对应的源文件路径列表
 - {{LESSON_NUMBERS}}：涉及的108课编号列表（如 课001,课005,课010）
 - {{DEPENDENCY_SUMMARY}}：前置章节的核心定义摘要（来自 00-DEPENDENCY.md）
+  注：P1/P2 章节无前置依赖，此变量填入固定文本：
+  "本章节为第一批（P1/P2），无前置知识依赖。读者视为缠论入门读者。"
 
 步骤：
 
@@ -272,11 +318,16 @@ Prompt 结构参考 `systematic/prompts/phase1-batch.md`，包含：
 2. 读取源材料
    - 读取 {{V1_SOURCE_FILES}} 中列出的 organized-v1 文件
    - 这些文件包含按主题聚合的原文摘录和问答
+   - **[见 GLOSSARY] 占位符处理**：当源文件中出现 `[见 GLOSSARY：XXX]`，直接从 00-GLOSSARY-V2.md 中提取该概念的精确定义写入📖定义段落，不保留占位符（v2 必须自包含）
+   - **❓ 归类存疑内容处理**：遇到 `❓ 归类存疑` 标记时：
+     - 若内容与本章节 {{CHAPTER_ID}} 高度相关 → 纳入，在📎关联中注明"从 XX 章节迁移"
+     - 若明确属于其他章节 → 跳过，在完成报告"归类存疑内容"栏中列出（格式：所在 v1 文件 | 建议归属章节）
 
 3. 按需交叉验证
    - 对于定义或定理有疑问时，读取 108/ 中 {{LESSON_NUMBERS}} 对应的原始课文
    - 使用 Read 工具读取，只读相关课文，不读全部
    - 当 organized-v1 的摘录不够完整或存在"归类存疑"标记时，务必读原文
+   - **Token 约束**：最多读取 {{LESSON_NUMBERS}} 中前 5 个核心课文；优先级为：有 ⭐ 标注的神节点课文 > 版本修订链末端课文 > 其他；若需超出，在完成报告中说明原因供人工判断
 
 4. 提炼知识（核心步骤）
    按照 00-TEMPLATE.md 的格式，逐段落提炼：
@@ -284,7 +335,7 @@ Prompt 结构参考 `systematic/prompts/phase1-batch.md`，包含：
    a. 📖 定义：充要条件式或 if-then 结构
       - 格式：「当[条件A] 且 [条件B] 时，称为 X；不满足任一条件则不构成 X」
       - 每个定义附原文引用（1-2句关键原文）
-      - 如果定义已在 GLOSSARY-V2 中，引用 GLOSSARY 而不重复
+      - 如果定义已在 GLOSSARY-V2 中，从 GLOSSARY-V2 展开完整充要条件定义写入📖定义段落，不使用占位符（v2 自包含，禁止 [见 GLOSSARY] 格式）
       - 禁止使用描述性语言，禁止"大概是"、"通常表现为"等模糊表述
 
    b. 📐 定理：前提 + 结论的规则库格式
@@ -295,6 +346,12 @@ Prompt 结构参考 `systematic/prompts/phase1-batch.md`，包含：
    c. 🔍 边界判断：判断树格式，而非叙述段落
       - 格式：「遇到 X 情况 → 先判断[条件1]：是→A，否→判断[条件2]：是→B，否→C」
       - 必须覆盖：与相邻概念的精确区分边界、定义的最终版本说明
+      - **历史版本降级示例**：
+        ```
+        遇到线段定义版本演进 → 判断是否为最终版本：
+          课45/67/71/78版本（历史）→ 各版定义 ⚠️ 历史版本，以课84为准
+          **课84版本（最终有效，见 GLOSSARY-V2）：[充要条件式定义]**
+        ```
 
    d. 💡 操作规则：AI 可直接匹配执行的规则格式
       - 格式：
@@ -309,9 +366,10 @@ Prompt 结构参考 `systematic/prompts/phase1-batch.md`，包含：
       - 如果原文缺乏足够素材，写"本节暂缺可执行操作规则"而不是编造
 
    e. 🖼️ 图示说明：原文涉及图片时
-      - 保留原始图片引用 ![...](../../108/pic/XXX.png)
-      - 紧随图片引用，补写文字描述：「此图描述了[X情况]下的K线形态：[描述]」
-      - AI 无法解析图片，文字描述是关键
+      - 图片引用路径统一改为 `../../108/pic/XXX.png`（从 organized-v2/ 下文件的相对路径）
+      - 紧随图片引用，从图片**前后的原文**中提取图片说明文字（不创造原文未说的内容）
+      - 若原文无图片说明 → 写 `<!-- 图片 XXX.png 暂无原文文字描述 -->`
+      - 禁止凭空描述图片内容（agent 无法解析图片）
 
    f. 📎 关联：基于 00-DEPENDENCY.md 和知识图谱中的关系，填写前置/扩展/对比
 
@@ -334,6 +392,8 @@ Prompt 结构参考 `systematic/prompts/phase1-batch.md`，包含：
 - 引用的课文编号列表
 - 任何无法确认的存疑点（标记 ⚠️）
 - 是否有因缺乏原文素材而省略的段落
+- **归类存疑内容**（若有）：| 所在 v1 文件 | 内容摘要 | 建议归属章节 |
+- **交叉验证超限说明**（若有）：说明超过5课限制的原因
 ```
 
 - [ ] **Step 2: Commit**
