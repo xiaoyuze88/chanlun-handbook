@@ -106,3 +106,5 @@ dist
 # temp release files
 **/108-*.md
 **/*.pdf
+
+docs/eval
