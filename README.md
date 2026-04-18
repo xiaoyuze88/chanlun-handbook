@@ -1,12 +1,21 @@
 # 缠中说禅教你炒股票108课加强版
 
+## 目录结构
 
+```
+archived/108/              # 缠中说禅原始博客原文（零散）
+archived/organized-v1/     # 第一版整理：通过 systematic/ 流程从 archived/108 整理而来
+archived/graphify-out-108/ # archived/108 的知识图谱
+archived/graphify-out-v1/  # archived/organized-v1 的知识图谱
+organized-v2/              # 第二版整理：通过 v2-systematic/ 流程从 archived/organized-v1 提炼而来（当前主版本）
+```
 
-包含以下内容：
+## 溯源路径
 
-- 全部108课原文（包括现在新浪博客显示**已加密**，或**已删除**的文章）
-- 大量课后回复（不仅仅是昵称为`缠中说禅`的，还包括`CCTV`、`罗锅`等被缠师点名表扬过，或者疑似缠师小号的回复）
-- 原文配图（基本找全了）
-- 108课之外的和缠论有关的文章（还在不断补充中）
+```
+archived/108  →(archived/systematic/)→  archived/organized-v1  →(archived/v2-systematic)→  organized-v2
+     ↓                                         ↓
+archived/graphify-out-108            archived/graphify-out-v1
+```
 
-本仓库 ./108 目录中是缠中说禅当年的博客原文,因为比较零散, organized-v1是我们通过内容整理后的第一个版本, graphify-out是我们针对 v1目录做的知识图谱扫描;graphify-out-108 是 我们针对原文108做的知识图谱.
+如需溯源某个知识点，可按此路径逐层回溯至原始博客。
